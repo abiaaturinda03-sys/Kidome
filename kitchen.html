@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pork Hub - Kitchen Operations Command Desk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Strict explicit pixel baseline architecture styling rules */
+        * {
+            margin: 0px;
+            padding: 0px;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .bg-pork-blue { background-color: #1e3a8a; }
+        .text-pork-blue { color: #1e3a8a; }
+        .bg-pork-green { background-color: #15803d; }
+        .bg-pork-gold { background-color: #eab308; }
+        .text-pork-gold { color: #eab308; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-950 font-sans h-screen flex flex-col overflow-hidden text-white">
+
+    <header class="bg-pork-blue p-4 shadow-md flex justify-between items-center z-10">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🥩</span>
+            <h1 class="text-xl font-black tracking-wide uppercase">Pork Hub Operational Kitchen Console</h1>
+        </div>
+    </header>
+
+    <div id="auth-gate-kitchen" class="fixed inset-0 bg-slate-950 z-50 p-6 flex flex-col justify-center items-center">
+        <div class="bg-slate-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-800 text-center space-y-4">
+            <p class="text-3xl">🔑</p>
+            <h3 class="text-lg font-black text-pork-gold uppercase tracking-wider">Kitchen Authorization Verification Gate</h3>
+            <p class="text-xs text-slate-400">Enter master employee credentials code parameters to launch queue stream tracks dashboard.</p>
+            <input type="password" id="login-kitchen-pin" placeholder="••••" maxlength="8" class="w-40 mx-auto block p-2 text-xl tracking-widest bg-slate-950 border border-slate-700 text-pork-gold text-center font-mono rounded-xl outline-none">
+            <button onclick="authenticateKitchenSession()" class="w-full bg-pork-gold text-slate-900 font-black py-2.5 rounded-xl uppercase text-xs tracking-wider shadow">Boot Operator Console</button>
+        </div>
+    </div>
+
+    <main class="flex-1 p-4 flex flex-col overflow-hidden max-w-4xl mx-auto w-full">
+        
+        <div class="grid grid-cols-2 gap-2 mb-3 bg-slate-900 p-3 rounded-xl border border-slate-800 font-mono">
+            <div><p class="text-[9px] uppercase text-gray-400">Total Revenue Paid ✓</p><p id="ledger-revenue-paid" class="text-base font-black text-green-400 mt-0.5">0 UGX</p></div>
+            <div><p class="text-[9px] uppercase text-gray-400">Pending Value ⏳</p><p id="ledger-revenue-pending" class="text-base font-black text-yellow-500 mt-0.5">0 UGX</p></div>
+        </div>
+
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+            <div class="flex items-center space-x-2">
+                <h2 class="text-xs font-black text-pork-gold uppercase tracking-widest text-pork-green">Live Processing Pipelines</h2>
+                <span id="ticket-count" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-gray-400">0 Open</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleAdminPasswordTab()" class="text-[9px] bg-blue-950 border border-blue-800 text-blue-300 px-2 py-0.5 rounded font-mono">🔑 Change Password Parameter</button>
+                <button onclick="logOutKitchen()" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded font-mono text-slate-400">Lock Terminal Screen</button>
+            </div>
+        </div>
+
+        <div id="kitchen-admin-password-box" class="hidden bg-slate-950 border border-blue-900/60 p-3 rounded-xl mb-3 space-y-2 font-mono text-xs">
+            <p class="text-pork-gold font-bold uppercase text-[9px] tracking-wider">🔒 Administrative Credentials Management Vector Tool</p>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-[8px] text-slate-500 uppercase">Current Access Code</label><input type="password" id="admin-change-old" class="w-full bg-slate-900 border border-slate-800 text-white rounded p-1 text-xs outline-none"></div>
+                <div><label class="block text-[8px] text-slate-500 uppercase">Target Replacement Pin</label><input type="password" id="admin-change-new" placeholder="Max 8 Digits" class="w-full bg-slate-900 border border-slate-800 text-pork-gold rounded p-1 text-xs outline-none"></div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-1">
+                <button onclick="toggleAdminPasswordTab()" class="text-[9px] text-slate-400 px-2 py-0.5">Cancel</button>
+                <button onclick="commitNewKitchenPassword()" class="bg-pork-green text-white text-[9px] font-bold px-3 py-1 rounded">Commit Config Swap</button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <div id="kitchen-queue" class="space-y-2 flex-1 overflow-y-auto pr-1"></div>
+            
+            <div class="border-t border-slate-800 pt-2 mt-2 h-[140px] flex flex-col overflow-hidden">
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-1">HQ Immutable Audit Log File Report</p>
+                <div class="flex-1 overflow-y-auto bg-slate-950 rounded-lg border border-slate-800 p-2 font-mono text-[9px] text-slate-400">
+                    <table class="w-full text-left">
+                        <thead><tr class="border-b border-slate-900 text-slate-600 text-[8px] font-black"><th class="pb-1">ID</th><th class="pb-1">Diner Customer</th><th class="pb-1">Items Batch Inventory</th><th class="pb-1 text-right">Revenue</th></tr></thead>
+                        <tbody id="kitchen-audit-rows" class="divide-y divide-slate-900/40"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function getKitchenMasterPin() {
+            return localStorage.getItem('pork_hub_master_pin') || "1234";
+        }
+
+        function authenticateKitchenSession() {
+            if (document.getElementById('login-kitchen-pin').value.trim() === getKitchenMasterPin()) {
+                document.getElementById('auth-gate-kitchen').classList.add('hidden');
+                updateKitchenMonitorView();
+            } else { alert("SECURITY EXCEPTION: Pin verification mismatch logic."); }
+        }
+
+        function logOutKitchen() {
+            document.getElementById('login-kitchen-pin').value = "";
+            document.getElementById('kitchen-admin-password-box').classList.add('hidden');
+            document.getElementById('auth-gate-kitchen').classList.remove('hidden');
+        }
+
+        function toggleAdminPasswordTab() {
+            document.getElementById('kitchen-admin-password-box').classList.toggle('hidden');
+        }
+
+        function commitNewKitchenPassword() {
+            let oldPin = document.getElementById('admin-change-old').value.trim();
+            let newPin = document.getElementById('admin-change-new').value.trim();
+            if (oldPin !== getKitchenMasterPin()) { alert("ERROR: Validation profile record mismatch parameters."); return; }
+            if (newPin.length < 4) { alert("ERROR: Minimum threshold rules allocation breakdown fail."); return; }
+            
+            localStorage.setItem('pork_hub_master_pin', newPin);
+            alert("SUCCESS: Administrative credentials parameter tracking table overwritten smoothly.");
+            toggleAdminPasswordTab();
+        }
+
+        window.triggerKitchenCountdown = function(id, mins) {
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let o = sharedOrders.find(x => x.id === id);
+            if (o) { o.status = 'Baking'; o.endTime = Date.now() + (mins * 60 * 1000); }
+            localStorage.setItem('pork_hub_orders', JSON.stringify(sharedOrders));
+            updateKitchenMonitorView();
+        };
+
+        window.triggerKitchenReady = function(id) {
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let o = sharedOrders.find(x => x.id === id);
+            if (o) { o.status = 'Ready'; o.endTime = null; }
+            localStorage.setItem('pork_hub_orders', JSON.stringify(sharedOrders));
+            updateKitchenMonitorView();
+        };
+
+        window.archiveSettleTicket = function(id) {
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let archivedLogs = JSON.parse(localStorage.getItem('pork_hub_archives') || '[]');
+            
+            let idx = sharedOrders.findIndex(x => x.id === id);
+            if (idx !== -1) {
+                let o = sharedOrders[idx];
+                archivedLogs.push({ id: o.id, client: o.name, phone: o.phone, items: o.details, payout: o.priceValue, logistics: o.logistics, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+                sharedOrders.splice(idx, 1);
+                
+                localStorage.setItem('pork_hub_orders', JSON.stringify(sharedOrders));
+                localStorage.setItem('pork_hub_archives', JSON.stringify(archivedLogs));
+                updateKitchenMonitorView();
+            }
+        };
+
+        function updateKitchenMonitorView() {
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let archivedLogs = JSON.parse(localStorage.getItem('pork_hub_archives') || '[]');
+            
+            document.getElementById('ticket-count').innerText = `${sharedOrders.length} Open`;
+            let paidSum = 0; let pendingSum = 0;
+            sharedOrders.forEach(x => pendingSum += x.priceValue);
+
+            const qBox = document.getElementById('kitchen-queue');
+            qBox.innerHTML = sharedOrders.length === 0 ? '<div class="text-center py-6 text-slate-500 font-mono text-xs">Terminal clear queue array.</div>' : "";
+            
+            sharedOrders.forEach(o => {
+                let ctrls = "";
+                if (o.status === 'Queued') {
+                    ctrls = `<div class="grid grid-cols-2 gap-1 mt-2"><button onclick="triggerKitchenCountdown('${o.id}', 15)" class="bg-slate-950 text-[10px] py-1 rounded">Grid 15m</button><button onclick="triggerKitchenCountdown('${o.id}', 30)" class="bg-slate-950 text-[10px] py-1 rounded">Grid 30m</button></div>`;
+                } else if (o.status === 'Baking') {
+                    ctrls = `<div class="flex justify-between items-center mt-2"><span class="text-xs text-yellow-400 font-bold">Grill Active Mode</span><button onclick="triggerKitchenReady('${o.id}')" class="bg-pork-green text-white text-[10px] px-2 py-1 rounded font-bold">Mark Ready</button></div>`;
+                } else if (o.status === 'Ready') {
+                    ctrls = `<div class="flex flex-col space-y-1 mt-2"><p class="text-[9px] text-pork-gold font-bold font-mono">Setup Check: ${o.finalHandoutStyle}</p><button onclick="archiveSettleTicket('${o.id}')" class="bg-pork-green text-white text-[10px] py-1 rounded font-bold uppercase">Settle & Release Logs</button></div>`;
+                }
+
+                const block = document.createElement('div');
+                block.className = "bg-slate-800 p-2.5 rounded-xl text-xs";
+                block.innerHTML = `
+                    <div class="font-bold flex justify-between"><span>${o.id} - ${o.name} [${o.logistics}]</span><span class="text-pork-gold font-mono">${o.priceValue.toLocaleString()} UGX</span></div>
+                    <p class="text-slate-300 font-mono mt-0.5">${o.details} [${o.location}]</p>${ctrls}`;
+                qBox.appendChild(block);
+            });
+
+            const auditBox = document.getElementById('kitchen-audit-rows');
+            auditBox.innerHTML = archivedLogs.length === 0 ? '<tr><td colspan="4" class="text-center py-2 text-slate-600 text-[10px]">Zero balances audited inside database parameters storage logs.</td></tr>' : "";
+            archivedLogs.forEach(l => {
+                paidSum += l.payout;
+                const tr = document.createElement('tr'); tr.className = "text-[10px] text-slate-300 font-mono border-b border-slate-900/30";
+                tr.innerHTML = `<td class="py-0.5 text-pork-gold">${l.id}</td><td>${l.client}</td><td>${l.items}</td><td class="text-right text-green-400 font-bold">${l.payout.toLocaleString()}</td>`;
+                auditBox.appendChild(tr);
+            });
+
+            document.getElementById('ledger-revenue-paid').innerText = paidSum.toLocaleString() + " UGX";
+            document.getElementById('ledger-revenue-pending').innerText = pendingSum.toLocaleString() + " UGX";
+        }
+
+        setInterval(updateKitchenMonitorView, 1000);
+    </script>
+</body>
+</html>

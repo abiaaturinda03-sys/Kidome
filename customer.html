@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pork Hub - Customer Ordering Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Strict pixel layouts for clean structural predictability */
+        * {
+            margin: 0px;
+            padding: 0px;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .bg-pork-blue { background-color: #1e3a8a; }
+        .text-pork-blue { color: #1e3a8a; }
+        .bg-pork-green { background-color: #15803d; }
+        .text-pork-green { color: #15803d; }
+        .bg-pork-gold { background-color: #eab308; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-pork-blue text-white p-4 shadow-md flex justify-between items-center z-10">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🔥</span>
+            <h1 class="text-xl font-black tracking-wide uppercase">Pork Hub Menu Terminal</h1>
+        </div>
+    </header>
+
+    <div id="logistics-popup-modal" class="hidden fixed inset-0 bg-black/70 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md text-center space-y-4">
+            <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex justify-center items-center text-3xl mx-auto font-bold">🔔</div>
+            <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight">Your Order Is Ready!</h3>
+            <p class="text-xs text-gray-500 font-mono">Ticket ID: <span id="modal-ticket-id" class="text-pork-blue font-bold">---</span></p>
+            <p class="text-sm font-medium text-gray-700">Please confirm how you want to collect your food:</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="submitLogisticsChoice('Takeaway')" class="bg-pork-gold hover:bg-yellow-500 text-slate-900 font-black py-4 rounded-xl flex flex-col items-center justify-center space-y-1 shadow">
+                    <span class="text-2xl">🛍️</span>
+                    <span class="text-xs uppercase tracking-wider">Takeaway Package</span>
+                </button>
+                <button onclick="submitLogisticsChoice('Dine-In')" class="bg-pork-blue hover:bg-blue-900 text-white font-black py-4 rounded-xl flex flex-col items-center justify-center space-y-1 shadow">
+                    <span class="text-2xl">🍽️</span>
+                    <span class="text-xs uppercase tracking-wider">Serve Me Here</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative p-4 max-w-md mx-auto w-full bg-white shadow-lg">
+        
+        <div id="auth-gate-customer" class="absolute inset-0 bg-slate-100 z-40 p-6 flex flex-col justify-center items-center">
+            <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border border-gray-200 text-center space-y-4">
+                <p class="text-3xl">📱</p>
+                <h3 class="text-lg font-black text-pork-blue uppercase">Diner Access Gateway</h3>
+                
+                <div id="cust-auth-step-1" class="space-y-3">
+                    <p class="text-xs text-gray-400">Provide basic profiles configuration to fetch secure dynamic entry pin parameter.</p>
+                    <div class="space-y-2 text-left">
+                        <label class="block text-[10px] font-bold uppercase text-gray-500">Your Name</label>
+                        <input type="text" id="login-cust-name" placeholder="e.g., Ivan K." class="w-full p-2.5 text-sm rounded-xl border outline-none">
+                        <label class="block text-[10px] font-bold uppercase text-gray-500">Mobile Phone Line</label>
+                        <input type="tel" id="login-cust-phone" placeholder="e.g., 0700000000" class="w-full p-2.5 text-sm rounded-xl border outline-none text-center font-bold">
+                    </div>
+                    <button onclick="generateCustomerOtpCode()" class="w-full bg-pork-blue text-white font-black py-2.5 rounded-xl uppercase text-xs tracking-wider shadow">
+                        Generate Access Code ⚡
+                    </button>
+                </div>
+
+                <div id="cust-auth-step-2" class="space-y-3 hidden border-t pt-3 border-dashed">
+                    <p class="text-xs text-emerald-600 font-bold bg-emerald-50 p-2 rounded-lg">✓ Verification parameters issued via broadcast loop handler.</p>
+                    <label class="block text-[10px] font-bold uppercase text-center text-gray-500">Enter Your 4-Digit Login Code</label>
+                    <input type="text" id="login-cust-otp-input" placeholder="••••" maxlength="4" class="w-28 mx-auto block p-2 text-xl tracking-widest text-center font-mono rounded-xl border outline-none font-black text-pork-blue">
+                    <button onclick="verifyCustomerOtpAndLogin()" class="w-full bg-pork-green text-white font-black py-2.5 rounded-xl uppercase text-xs tracking-wider shadow">
+                        Verify & Enter Dining Hub
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex border-b border-gray-200 mb-4 bg-white p-1.5 rounded-xl shadow-sm">
+            <button id="tab-btn-create" onclick="switchCustomerTab('create')" class="flex-1 text-center py-2 text-xs font-black uppercase rounded-lg bg-pork-blue text-white transition-all shadow-sm">📝 Place New Order</button>
+            <button id="tab-btn-hub" onclick="switchCustomerTab('hub')" class="flex-1 text-center py-2 text-xs font-black uppercase rounded-lg text-gray-500 hover:bg-gray-100 transition-all ml-1 flex justify-center items-center space-x-2">
+                <span>📱 My Active Orders</span>
+                <span id="customer-hub-badge" class="bg-red-500 text-white font-mono text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
+            </button>
+        </div>
+
+        <div id="panel-customer-create" class="flex flex-col justify-between flex-1 overflow-hidden">
+            <div class="space-y-3 overflow-y-auto pr-1 flex-1 pb-4">
+                <div class="bg-gradient-to-r from-blue-900 to-indigo-950 p-3 rounded-xl text-white shadow-inner flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] uppercase font-mono text-blue-300">Active Checked-In Diner Profile</p>
+                        <h4 id="user-greeting-name" class="text-sm font-black tracking-wide">Welcome!</h4>
+                    </div>
+                    <button onclick="logOutCustomer()" class="text-[10px] bg-white/10 px-2 py-1 rounded font-mono text-red-300">Sign Out</button>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl space-y-2.5">
+                    <div>
+                        <label class="block text-[10px] font-black text-pork-blue uppercase tracking-wider mb-1">Where should we deliver your food?</label>
+                        <input type="text" id="cust-location" placeholder="e.g., Table 4, Counter Stool..." class="w-full p-2 text-xs rounded-lg border bg-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-pork-blue uppercase tracking-wider mb-1">Initial Dining Layout Plan Preference:</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="bg-white p-2 rounded-lg border flex items-center space-x-2 text-xs font-bold text-gray-700 cursor-pointer"><input type="radio" name="initial-logistics" value="Dine-In" checked class="w-3.5 h-3.5 accent-pork-blue"> <span class="text-pork-green font-bold">🍽️ Serve Here</span></label>
+                            <label class="bg-white p-2 rounded-lg border flex items-center space-x-2 text-xs font-bold text-gray-700 cursor-pointer"><input type="radio" name="initial-logistics" value="Takeaway" class="w-3.5 h-3.5 accent-pork-blue"> <span class="text-pork-green font-bold">🛍️ Takeaway</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2" id="menu-item-list"></div>
+            </div>
+
+            <div class="bg-white border p-3 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-gray-500 text-xs">Total Bill Due:</span>
+                    <span id="cust-total-price" class="text-base font-black text-pork-blue">0 UGX</span>
+                </div>
+                <button onclick="placeCustomerOrder()" class="w-full bg-pork-green text-white font-bold py-2.5 rounded-xl tracking-wide uppercase text-xs shadow">Send Live Order</button>
+            </div>
+        </div>
+
+        <div id="panel-customer-hub" class="hidden flex-col flex-1 overflow-hidden">
+            <p class="text-[11px] text-gray-500 font-black uppercase mb-2 tracking-wider">My Active Kitchen Tickets Pipeline:</p>
+            <div id="customer-active-pipeline-list" class="space-y-3 flex-1 overflow-y-auto pr-1 pb-4"></div>
+            <div class="border-t pt-2 mt-2 h-[110px] flex flex-col overflow-hidden">
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1 tracking-wider font-mono">My Purchases Ledger History:</p>
+                <div class="flex-1 overflow-y-auto bg-white border rounded-lg p-2 font-mono text-[10px] text-gray-600 space-y-1" id="customer-ledger-box"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const menuPrices = { fried1kg: 18000, fried05kg: 10000, choma1kg: 20000, beer: 5000 };
+        const menuLabels = { fried1kg: "Fried Pork (1 Kg)", fried05kg: "Fried Pork (0.5 Kg)", choma1kg: "Choma Roast (1 Kg)", beer: "Cold Beer" };
+        let currentQuantities = { fried1kg: 0, fried05kg: 0, choma1kg: 0, beer: 0 };
+        let activeCustomerSession = null; 
+        let generatedCustomerCodeTracker = null; 
+        let currentModalTicketId = null;
+
+        function buildCustomerMenuUI() {
+            const menuBox = document.getElementById('menu-item-list');
+            menuBox.innerHTML = "";
+            for (const key in menuPrices) {
+                const row = document.createElement('div');
+                row.className = "bg-white p-2.5 rounded-xl shadow-sm border flex justify-between items-center text-xs";
+                row.innerHTML = `
+                    <div><h4 class="font-bold text-gray-800">${menuLabels[key]}</h4><p class="text-[11px] text-pork-green font-bold">${menuPrices[key].toLocaleString()} UGX</p></div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeQty('${key}', -1)" class="w-6 h-6 bg-gray-200 rounded font-bold">-</button>
+                        <span id="qty-${key}" class="w-4 text-center font-bold">0</span>
+                        <button onclick="changeQty('${key}', 1)" class="w-6 h-6 bg-pork-blue text-white rounded font-bold">+</button>
+                    </div>`;
+                menuBox.appendChild(row);
+            }
+        }
+
+        function changeQty(item, delta) {
+            currentQuantities[item] += delta;
+            if (currentQuantities[item] < 0) currentQuantities[item] = 0;
+            document.getElementById(`qty-${item}`).innerText = currentQuantities[item];
+            let total = 0;
+            for (const key in currentQuantities) total += currentQuantities[key] * menuPrices[key];
+            document.getElementById('cust-total-price').innerText = total.toLocaleString() + " UGX";
+        }
+
+        function generateCustomerOtpCode() {
+            let name = document.getElementById('login-cust-name').value.trim();
+            let phone = document.getElementById('login-cust-phone').value.trim();
+            if (!name || !phone) { alert("Provide baseline identity coordinates parameters."); return; }
+            generatedCustomerCodeTracker = String(Math.floor(1000 + Math.random() * 9000));
+            alert(`💬 ACCESS CODE BROADCAST:\nYour custom access pin parameter token string configuration is: [ ${generatedCustomerCodeTracker} ]`);
+            document.getElementById('cust-auth-step-1').classList.add('hidden');
+            document.getElementById('cust-auth-step-2').classList.remove('hidden');
+        }
+
+        function verifyCustomerOtpAndLogin() {
+            let codeInput = document.getElementById('login-cust-otp-input').value.trim();
+            if (codeInput === generatedCustomerCodeTracker && generatedCustomerCodeTracker !== null) {
+                activeCustomerSession = { name: document.getElementById('login-cust-name').value.trim(), phone: document.getElementById('login-cust-phone').value.trim() };
+                document.getElementById('user-greeting-name').innerText = `${activeCustomerSession.name} (${activeCustomerSession.phone})`;
+                document.getElementById('auth-gate-customer').classList.add('hidden');
+                updateCustomerInterfaceView();
+            } else { alert("ACCESS DENIED: Passcode data packet structural string mismatch configuration."); }
+        }
+
+        function logOutCustomer() {
+            activeCustomerSession = null; generatedCustomerCodeTracker = null;
+            document.getElementById('login-cust-otp-input').value = "";
+            document.getElementById('cust-auth-step-2').classList.add('hidden');
+            document.getElementById('cust-auth-step-1').classList.remove('hidden');
+            document.getElementById('auth-gate-customer').classList.remove('hidden');
+        }
+
+        function switchCustomerTab(tab) {
+            if (tab === 'create') {
+                document.getElementById('panel-customer-create').classList.remove('hidden');
+                document.getElementById('panel-customer-hub').classList.add('hidden');
+            } else {
+                document.getElementById('panel-customer-create').classList.add('hidden');
+                document.getElementById('panel-customer-hub').classList.remove('hidden');
+            }
+            updateCustomerInterfaceView();
+        }
+
+        function placeCustomerOrder() {
+            let loc = document.getElementById('cust-location').value.trim();
+            let logisticalPreference = document.querySelector('input[name="initial-logistics"]:checked').value;
+            if (!loc) { alert("Please input active service table delivery coordinates parameter."); return; }
+
+            let items = []; let sum = 0;
+            for (const key in currentQuantities) {
+                if (currentQuantities[key] > 0) {
+                    items.push(`${currentQuantities[key]}x [${menuLabels[key]}]`);
+                    sum += currentQuantities[key] * menuPrices[key];
+                }
+            }
+            if (items.length === 0) { alert("Cart line parameters completely unassigned."); return; }
+
+            let localOrdersArray = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            localOrdersArray.push({
+                id: `PK-${Math.floor(Math.random()*900)+100}`, name: activeCustomerSession.name, phone: activeCustomerSession.phone,
+                location: loc, details: items.join(", "), priceValue: sum, status: 'Queued', logistics: logisticalPreference,
+                popupPromptTriggered: false, finalHandoutStyle: "Awaiting Logistics Flag Match"
+            });
+
+            localStorage.setItem('pork_hub_orders', JSON.stringify(localOrdersArray));
+            for (const key in currentQuantities) currentQuantities[key] = 0;
+            buildCustomerMenuUI();
+            document.getElementById('cust-total-price').innerText = "0 UGX";
+            document.getElementById('cust-location').value = "";
+            switchCustomerTab('hub');
+        }
+
+        function submitLogisticsChoice(choice) {
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let o = sharedOrders.find(x => x.id === currentModalTicketId);
+            if (o) {
+                o.logistics = choice;
+                o.finalHandoutStyle = choice === "Takeaway" ? "Pack in Takeaway Bag" : "Serve on Wood Tray";
+            }
+            localStorage.setItem('pork_hub_orders', JSON.stringify(sharedOrders));
+            document.getElementById('logistics-popup-modal').classList.add('hidden');
+            currentModalTicketId = null;
+            updateCustomerInterfaceView();
+        }
+
+        function updateCustomerInterfaceView() {
+            if (!activeCustomerSession) return;
+            let sharedOrders = JSON.parse(localStorage.getItem('pork_hub_orders') || '[]');
+            let archivedLogs = JSON.parse(localStorage.getItem('pork_hub_archives') || '[]');
+            
+            let myTickets = sharedOrders.filter(x => x.phone === activeCustomerSession.phone);
+            document.getElementById('customer-hub-badge').innerText = myTickets.length;
+            
+            const pipeBox = document.getElementById('customer-active-pipeline-list');
+            pipeBox.innerHTML = myTickets.length === 0 ? '<div class="text-center py-4 text-xs italic text-gray-400">No open kitchen entries under configuration file.</div>' : "";
+            
+            myTickets.forEach(o => {
+                let timerText = "Queued Pipeline Line Parameter";
+                if (o.status === 'Baking' && o.endTime) {
+                    let rem = o.endTime - Date.now();
+                    timerText = rem > 0 ? `Grilling: ${Math.floor(rem/60000)}m left` : "Plating Portions";
+                } else if (o.status === 'Ready') { timerText = o.finalHandoutStyle; }
+                
+                const div = document.createElement('div');
+                div.className = "bg-white p-3 rounded-xl border border-gray-200 shadow-sm text-xs";
+                div.innerHTML = `
+                    <div class="flex justify-between font-bold"><span>${o.id} [${o.logistics}]</span><span class="text-pork-blue uppercase text-[10px]">${o.status}</span></div>
+                    <p class="text-gray-600 mt-1">${o.details}</p>
+                    <div class="border-t mt-1 pt-1 text-[10px] text-gray-400 flex justify-between"><span>Status:</span><span class="font-bold text-pork-blue">${timerText}</span></div>`;
+                pipeBox.appendChild(div);
+            });
+
+            let popupCheck = sharedOrders.find(x => x.phone === activeCustomerSession.phone && x.status === 'Ready' && !x.popupPromptTriggered);
+            if (popupCheck) {
+                popupCheck.popupPromptTriggered = true; 
+                currentModalTicketId = popupCheck.id;
+                document.getElementById('modal-ticket-id').innerText = popupCheck.id;
+                document.getElementById('logistics-popup-modal').classList.remove('hidden');
+                localStorage.setItem('pork_hub_orders', JSON.stringify(sharedOrders));
+            }
+
+            const clientLedgerBox = document.getElementById('customer-ledger-box');
+            let myPastArchives = archivedLogs.filter(l => l.phone === activeCustomerSession.phone);
+            clientLedgerBox.innerHTML = myPastArchives.length === 0 ? '<p class="text-center text-gray-400 italic py-4">Clear transaction parameter history ledger index.</p>' : "";
+            myPastArchives.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = "border-b border-gray-100 py-0.5 flex justify-between items-center text-gray-500";
+                entry.innerHTML = `<span>[${log.timestamp}] Released [${log.logistics}] <strong>${log.id}</strong></span><span class="text-pork-green font-bold">+${log.payout.toLocaleString()}</span>`;
+                clientLedgerBox.appendChild(entry);
+            });
+        }
+
+        buildCustomerMenuUI();
+        setInterval(updateCustomerInterfaceView, 1000);
+    </script>
+</body>
+</html>
